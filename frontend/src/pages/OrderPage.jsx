@@ -1,16 +1,15 @@
-/* eslint-disable no-unused-vars */
-import React, { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import axios from "axios";
+import React, { useEffect, useState } from 'react';
+import { Link, useParams } from 'react-router-dom';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import axios from 'axios';
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
   CardDescription,
-} from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
+} from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
 import {
   ShoppingCart,
   Truck,
@@ -18,23 +17,24 @@ import {
   ArrowLeft,
   Package,
   DollarSign,
-} from "lucide-react";
-import { motion } from "framer-motion";
-import { FaSpinner, FaExclamationTriangle } from "react-icons/fa";
-import { useSelector } from "react-redux";
-import { toast } from "react-toastify";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+} from 'lucide-react';
+import { motion } from 'framer-motion';
+import { FaSpinner, FaExclamationTriangle } from 'react-icons/fa';
+import { useSelector } from 'react-redux';
+import { toast } from 'react-toastify';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import {
   Elements,
   PaymentElement,
   useStripe,
   useElements,
-} from "@stripe/react-stripe-js";
-import { loadStripe } from "@stripe/stripe-js";
+} from '@stripe/react-stripe-js';
+import { loadStripe } from '@stripe/stripe-js';
 
+// Do not forget to change the  key to you own publisher key
 const stripePromise = loadStripe(
-  "pk_test_51Q5qtpEAnvAOEf8E7Udi625h2tNVMeUM6dvV2RNb2XZ7pZQ990rJexYN8OTefbtrhb1BhqYJ02GYzdi0izusWFZM00oQkEulaJ",
+  'pk_test_51Q5qtpEAnvAOEf8E7Udi625h2tNVMeUM6dvV2RNb2XZ7pZQ990rJexYN8OTefbtrhb1BhqYJ02GYzdi0izusWFZM00oQkEulaJ'
 );
 
 const CheckoutForm = ({ onSuccess }) => {
@@ -53,12 +53,12 @@ const CheckoutForm = ({ onSuccess }) => {
 
     const { error, paymentIntent } = await stripe.confirmPayment({
       elements,
-      redirect: "if_required",
+      redirect: 'if_required',
     });
 
     if (error) {
       toast.error(error.message);
-    } else if (paymentIntent.status === "succeeded") {
+    } else if (paymentIntent.status === 'succeeded') {
       onSuccess();
     }
 
@@ -78,7 +78,7 @@ const CheckoutForm = ({ onSuccess }) => {
             Processing...
           </span>
         ) : (
-          "Pay Now"
+          'Pay Now'
         )}
       </Button>
     </form>
@@ -87,19 +87,19 @@ const CheckoutForm = ({ onSuccess }) => {
 
 const statusStyles = {
   delivered: {
-    true: "bg-teal-50 text-teal-700 border-teal-200",
-    false: "bg-amber-50 text-amber-700 border-amber-200",
+    true: 'bg-teal-50 text-teal-700 border-teal-200',
+    false: 'bg-amber-50 text-amber-700 border-amber-200',
   },
   paid: {
-    true: "bg-teal-50 text-teal-700 border-teal-200",
-    false: "bg-rose-50 text-rose-700 border-rose-200",
+    true: 'bg-teal-50 text-teal-700 border-teal-200',
+    false: 'bg-rose-50 text-rose-700 border-rose-200',
   },
 };
 
 const OrderPage = () => {
   const { id: orderId } = useParams();
   const { userInfo } = useSelector((state) => state.auth);
-  const [clientSecret, setClientSecret] = useState("");
+  const [clientSecret, setClientSecret] = useState('');
 
   const {
     data: order,
@@ -107,7 +107,7 @@ const OrderPage = () => {
     isError,
     refetch,
   } = useQuery({
-    queryKey: ["order", orderId],
+    queryKey: ['order', orderId],
     queryFn: async () => {
       const { data } = await axios.get(`/api/orders/${orderId}`);
       return data;
@@ -115,14 +115,16 @@ const OrderPage = () => {
   });
 
   const { mutate: deliverOrder, isLoading: isDeliverLoading } = useMutation({
-    mutationKey: ["deliverOrder"],
+    mutationKey: ['deliverOrder'],
     mutationFn: async ({ orderId }) => {
       const { data } = await axios.put(`/api/orders/${orderId}/deliver`);
       return data;
     },
     onSuccess: () => {
       refetch();
-      toast.success("Order delivered!");
+      toast.success('Order delivered!');
+      const successSound = new Audio('/assets/sounds/success.mp3');
+      successSound.play();
     },
     onError: (error) => {
       toast.error(error?.response?.data?.message || error.message);
@@ -134,13 +136,13 @@ const OrderPage = () => {
   }, []);
 
   useEffect(() => {
-    if (order && !order.isPaid) {
+    if (order && order.status !== 'paid') {
       const createPaymentIntent = async () => {
         try {
           const { data } = await axios.put(`/api/orders/${orderId}/pay`);
           setClientSecret(data.clientSecret);
         } catch (err) {
-          toast.error("Failed to initialize payment. Please try again.");
+          toast.error('Failed to initialize payment. Please try again.');
         }
       };
       createPaymentIntent();
@@ -148,8 +150,15 @@ const OrderPage = () => {
   }, [order, orderId]);
 
   const handlePaymentSuccess = async () => {
-    await refetch();
-    toast.success("Payment successful! Your order has been paid.");
+    try {
+      await axios.put(`/api/orders/${order._id}/pay`);
+      refetch();
+      toast.success('Payment successful!');
+      const successSound = new Audio('/assets/sounds/success.mp3');
+      successSound.play();
+    } catch (error) {
+      toast.error(error?.response?.data?.message || error.message);
+    }
   };
 
   if (isLoading) {
@@ -186,7 +195,7 @@ const OrderPage = () => {
   const stripeOptions = {
     clientSecret,
     appearance: {
-      theme: "stripe",
+      theme: 'stripe',
     },
   };
 
@@ -210,17 +219,15 @@ const OrderPage = () => {
         </h1>
         <Badge
           className={`text-sm py-1 px-3 border ${
-            statusStyles.paid[order.isPaid]
+            statusStyles.paid[order.status === 'paid']
           }`}
         >
-          {order.isPaid ? "Paid" : "Unpaid"}
+          {order.status === 'paid' ? 'Paid' : 'Unpaid'}
         </Badge>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left column - Order details */}
         <div className="lg:col-span-2 space-y-8">
-          {/* Shipping Information Card */}
           <Card className="bg-white shadow-sm">
             <CardHeader className="border-b border-gray-100">
               <CardTitle className="flex items-center text-xl text-gray-800">
@@ -245,13 +252,12 @@ const OrderPage = () => {
                     statusStyles.delivered[order.isDelivered]
                   }`}
                 >
-                  {order.isDelivered ? "Delivered" : "Pending"}
+                  {order.isDelivered ? 'Delivered' : 'Pending'}
                 </Badge>
               </div>
             </CardContent>
           </Card>
 
-          {/* Payment Details Card */}
           <Card className="bg-white shadow-sm">
             <CardHeader className="border-b border-gray-100">
               <CardTitle className="flex items-center text-xl text-gray-800">
@@ -261,23 +267,22 @@ const OrderPage = () => {
             <CardContent className="space-y-4 p-6">
               <div className="flex justify-between items-center">
                 <p className="text-gray-600">Method:</p>
-                <p className="font-medium">Stripe</p>
+                <p className="font-medium">Credit Card</p>
               </div>
               <Separator className="bg-gray-100" />
               <div className="flex justify-between items-center">
                 <p className="text-gray-600">Payment Status:</p>
                 <Badge
                   className={`text-xs py-1 px-2 border ${
-                    statusStyles.paid[order.isPaid]
+                    statusStyles.paid[order.status === 'paid']
                   }`}
                 >
-                  {order.isPaid ? "Paid" : "Unpaid"}
+                  {order.status === 'paid' ? 'Paid' : 'Unpaid'}
                 </Badge>
               </div>
             </CardContent>
           </Card>
 
-          {/* Order Items Card */}
           <Card className="bg-white shadow-sm">
             <CardHeader className="border-b border-gray-100">
               <CardTitle className="flex items-center text-xl text-gray-800">
@@ -306,12 +311,6 @@ const OrderPage = () => {
                           className="w-16 h-16 object-cover rounded-md"
                         />
                         <div>
-                          <Link
-                            to={`/products/${item._id}`}
-                            className="text-lg font-medium text-indigo-600 hover:text-indigo-700"
-                          >
-                            {item.name}
-                          </Link>
                           <p className="text-gray-500">
                             {item.qty} x ${item.price.toFixed(2)}
                           </p>
@@ -328,7 +327,6 @@ const OrderPage = () => {
           </Card>
         </div>
 
-        {/* Right column - Order summary and payment */}
         <div className="lg:col-span-1 space-y-6">
           <Card className="bg-white shadow-sm sticky top-8">
             <CardHeader className="border-b border-gray-100">
@@ -359,7 +357,7 @@ const OrderPage = () => {
                 </div>
               </div>
 
-              {!order.isPaid && clientSecret && (
+              {order.status !== 'paid' && clientSecret && (
                 <motion.div
                   className="mt-6"
                   initial={{ opacity: 0 }}
@@ -387,44 +385,46 @@ const OrderPage = () => {
                 </motion.div>
               )}
 
-              {userInfo.isAdmin && order.isPaid && !order.isDelivered && (
-                <motion.div
-                  className="mt-6"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.5 }}
-                >
-                  <Card className="bg-white border border-gray-200">
-                    <CardHeader>
-                      <CardTitle className="text-lg text-center text-gray-800">
-                        Mark as Delivered
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <Button
-                        className="w-full bg-teal-600 hover:bg-teal-700 text-white"
-                        onClick={() => deliverOrder({ orderId: order._id })}
-                        disabled={isDeliverLoading}
-                      >
-                        {isDeliverLoading ? (
-                          <>
-                            <FaSpinner
-                              className="animate-spin mr-2"
-                              size={18}
-                            />
-                            Processing...
-                          </>
-                        ) : (
-                          <>
-                            <Package className="mr-2" size={18} />
-                            Mark Order as Delivered
-                          </>
-                        )}
-                      </Button>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              )}
+              {userInfo.isAdmin &&
+                order.status === 'paid' &&
+                !order.isDelivered && (
+                  <motion.div
+                    className="mt-6"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    <Card className="bg-white border border-gray-200">
+                      <CardHeader>
+                        <CardTitle className="text-lg text-center text-gray-800">
+                          Mark as Delivered
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <Button
+                          className="w-full bg-teal-600 hover:bg-teal-700 text-white"
+                          onClick={() => deliverOrder({ orderId: order._id })}
+                          disabled={isDeliverLoading}
+                        >
+                          {isDeliverLoading ? (
+                            <>
+                              <FaSpinner
+                                className="animate-spin mr-2"
+                                size={18}
+                              />
+                              Processing...
+                            </>
+                          ) : (
+                            <>
+                              <Package className="mr-2" size={18} />
+                              Mark Order as Delivered
+                            </>
+                          )}
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                )}
             </CardContent>
           </Card>
         </div>

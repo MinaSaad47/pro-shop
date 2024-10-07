@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { toast } from "react-toastify";
-import { setCredentials } from "@/store";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import axios from "axios";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import React, { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { toast } from 'react-toastify';
+import { setCredentials } from '@/store';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import axios from 'axios';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Table,
   TableBody,
@@ -14,31 +14,31 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { FaTimes, FaCheck } from "react-icons/fa";
+} from '@/components/ui/table';
+import { FaTimes, FaCheck } from 'react-icons/fa';
 
 const ProfilePage = () => {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
   const dispatch = useDispatch();
   const { userInfo } = useSelector((state) => state.auth);
 
   const { mutateAsync: updateProfile, isLoading: isUpdateLoading } =
     useMutation({
-      mutationKey: ["updateProfile"],
+      mutationKey: ['updateProfile'],
       mutationFn: async (body) => {
-        const { data } = await axios.put("/api/users/profile", body);
+        const { data } = await axios.put('/api/users/profile', body);
         return data;
       },
     });
 
   const { data: myOrders, isLoading: isMyOrdersLoading } = useQuery({
-    queryKey: ["myOrders"],
+    queryKey: ['myOrders'],
     queryFn: async () => {
-      const { data } = await axios.get("/api/orders/myorders");
+      const { data } = await axios.get('/api/orders/myorders');
       return data;
     },
   });
@@ -58,7 +58,7 @@ const ProfilePage = () => {
     e.preventDefault();
 
     if (password !== confirmPassword) {
-      toast.error("Passwords do not match");
+      toast.error('Passwords do not match');
       return;
     }
 
@@ -70,7 +70,7 @@ const ProfilePage = () => {
         password,
       });
       dispatch(setCredentials(res));
-      toast.success("Profile updated successfully");
+      toast.success('Profile updated successfully');
     } catch (err) {
       toast.error(err?.response?.data?.message || err.message);
     }
@@ -161,7 +161,7 @@ const ProfilePage = () => {
               disabled={isUpdateLoading}
               className="w-full text-white"
             >
-              {isUpdateLoading ? "Updating..." : "Update Profile"}
+              {isUpdateLoading ? 'Updating...' : 'Update Profile'}
             </Button>
           </form>
         </div>
@@ -199,7 +199,7 @@ const ProfilePage = () => {
                         ${order.totalPrice.toFixed(2)}
                       </TableCell>
                       <TableCell>
-                        {order.isPaid ? (
+                        {order.status === 'paid' ? (
                           <FaCheck className="text-green-500" />
                         ) : (
                           <FaTimes className="text-red-500" />

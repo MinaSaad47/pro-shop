@@ -1,25 +1,26 @@
-import React from "react";
-import { ShoppingCart, User, Menu, ChevronDown, LogOut } from "lucide-react";
-import { useSelector, useDispatch } from "react-redux";
-import { Link, useNavigate } from "react-router-dom";
-import { useMutation } from "@tanstack/react-query";
-import axios from "axios";
-import { logout } from "@/store";
-import logo from "../assets/images/logo.png";
-import { Button } from "@/components/ui/button";
+import React from 'react';
+import { ShoppingCart, User, Menu, ChevronDown, LogOut } from 'lucide-react';
+import { useSelector, useDispatch } from 'react-redux';
+import { Link, useNavigate } from 'react-router-dom';
+import { useMutation } from '@tanstack/react-query';
+import { clearCart } from '@/store';
+import axios from 'axios';
+import { logout } from '@/store';
+import logo from '../assets/images/logo.png';
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from '@/components/ui/dropdown-menu';
 import {
   Sheet,
   SheetContent,
   SheetTrigger,
   SheetClose,
-} from "@/components/ui/sheet";
+} from '@/components/ui/sheet';
 
 const Header = () => {
   const { cartItems } = useSelector((state) => state.cart);
@@ -29,11 +30,11 @@ const Header = () => {
 
   const { mutateAsync: logoutApiCall } = useMutation({
     mutationFn: async () => {
-      const res = await axios.post("/api/users/logout");
+      const res = await axios.post('/api/users/logout');
       return res.data;
     },
     onError: (error) => {
-      console.error("Logout failed:", error);
+      console.error('Logout failed:', error);
     },
   });
 
@@ -41,9 +42,10 @@ const Header = () => {
     try {
       await logoutApiCall();
       dispatch(logout());
-      navigate("/login");
+      dispatch(clearCart());
+      navigate('/login');
     } catch (err) {
-      console.error("Logout error:", err);
+      console.error('Logout error:', err);
     }
   };
 
@@ -79,7 +81,6 @@ const Header = () => {
           </Link>
         </DropdownMenuItem>
 
-        {/* Admin Dropdown */}
         {userInfo.isAdmin && (
           <>
             <DropdownMenuSeparator />
